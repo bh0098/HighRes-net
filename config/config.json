@@ -34,12 +34,12 @@
   },
     
   "training": {
-     "num_epochs": 400,
-     "batch_size": 32,
+     "num_epochs": 5,
+     "batch_size": 2,
 
      "min_L": 32,
      "n_views": 32,
-     "n_workers": 4,
+     "n_workers": 1,
      "crop": 3,
 
 

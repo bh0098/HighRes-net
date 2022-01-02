@@ -31,7 +31,9 @@ def get_sr_and_score(imset, model, min_L=16):
         lrs, alphas, hrs, hr_maps, names = collator([imset])
     elif isinstance(imset, tuple):  # imset is a tuple of batches
         lrs, alphas, hrs, hr_maps, names = imset
-
+    else:
+        collator = collateFunction(min_L=min_L)
+        lrs, alphas, hrs, hr_maps, names = collator([imset])
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     lrs = lrs.float().to(device)
     alphas = alphas.float().to(device)
@@ -67,6 +69,10 @@ def load_data(config_file_path, val_proportion=0.10, top_k=-1):
         config = json.load(read_file)
 
     data_directory = config["paths"]["prefix"]
+
+    #i add this line 
+    data_directory = "../"+data_directory
+    
     baseline_cpsnrs = readBaselineCPSNR(os.path.join(data_directory, "norm.csv"))
 
     train_set_directories = getImageSetDirectories(os.path.join(data_directory, "train"))
@@ -93,7 +99,7 @@ def load_model(config, checkpoint_file):
         model: HRNet, a pytorch model
     '''
     
-#     checkpoint_dir = config["paths"]["checkpoint_dir"]
+#   checkpoint_dir = config["paths"]["checkpoint_dir"]
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = HRNet(config["network"]).to(device)
     model.load_state_dict(torch.load(checkpoint_file))
@@ -123,10 +129,12 @@ def evaluate(model, train_dataset, val_dataset, test_dataset, min_L=16):
     for s, imset_dataset in [('train', train_dataset),
                              ('val', val_dataset),
                              ('test', test_dataset)]:
-
-        if __IPYTHON__:
+        try:
+            if __IPYTHON__:
+                tqdm = tqdm_notebook
+        except:
             tqdm = tqdm_notebook
-
+            print("not runnig from notebook ! ")
         for imset in tqdm(imset_dataset):
             sr, scPSNR = get_sr_and_score(imset, model, min_L=min_L)
             scores[imset['name']] = scPSNR

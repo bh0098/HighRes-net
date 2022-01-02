@@ -20,7 +20,11 @@ def readBaselineCPSNR(path):
     Returns:
         scores: dict, of {'imagexxx' (str): score (float)}
     """
+    
+   
     scores = dict()
+
+
     with open(path, 'r') as file:
         reader = csv.reader(file, delimiter=' ')
         for row in reader:

@@ -13,6 +13,7 @@ import argparse
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.optim import lr_scheduler
+import GPUtil
 
 from DeepNetworks.HRNet import HRNet
 from DeepNetworks.ShiftNet import ShiftNet
@@ -139,7 +140,8 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
     writer = SummaryWriter(logging_dir)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    # device = torch.device('cpu')
+    print("device : ", device)
     best_score = 100
 
     P = config["training"]["patch_size"]
@@ -161,6 +163,7 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
         regis_model.train()
         train_loss = 0.0  # monitor train loss
 
+        GPUtil.showUtilization()
         # Iterate over data.
         for lrs, alphas, hrs, hr_maps, names in tqdm(dataloaders['train']):
 
@@ -169,7 +172,7 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
             alphas = alphas.float().to(device)
             hr_maps = hr_maps.float().to(device)
             hrs = hrs.float().to(device)
-
+            GPUtil.showUtilization()
             # torch.autograd.set_detect_anomaly(mode=True)
             srs = fusion_model(lrs, alphas)  # fuse multi frames (B, 1, 3*W, 3*H)
 
@@ -178,7 +181,6 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
                                     srs[:, :, offset:(offset + 128), offset:(offset + 128)],
                                     reference=hrs[:, offset:(offset + 128), offset:(offset + 128)].view(-1, 1, 128, 128))
             srs_shifted = apply_shifts(regis_model, srs, shifts, device)[:, 0]
-
             # Training loss
             cropped_mask = torch_mask[0] * hr_maps  # Compute current mask (Batch size, W, H)
             # srs_shifted = torch.clamp(srs_shifted, min=0.0, max=1.0)  # correct over/under-shoots
@@ -191,7 +193,8 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
             optimizer.step()
             epoch_loss = loss.detach().cpu().numpy() * len(hrs) / len(dataloaders['train'].dataset)
             train_loss += epoch_loss
-
+            print("epoch {} loss :".format(epoch),epoch_loss)
+            print("train  loss :",train_loss)
         # Eval
         fusion_model.eval()
         val_score = 0.0  # monitor val score
@@ -223,6 +226,7 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
                        os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
             best_score = val_score
 
+        print("validation score : ",val_score)
         writer.add_image('SR Image', (srs[0] - np.min(srs[0])) / np.max(srs[0]), epoch, dataformats='HW')
         error_map = hrs[0] - srs[0]
         writer.add_image('Error Map', error_map, epoch, dataformats='HW')
@@ -252,6 +256,8 @@ def main(config):
     optimizer = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()), lr=config["training"]["lr"])  # optim
     # ESA dataset
     data_directory = config["paths"]["prefix"]
+
+    GPUtil.showUtilization()
 
     baseline_cpsnrs = None
     if os.path.exists(os.path.join(data_directory, "norm.csv")):
@@ -297,7 +303,7 @@ def main(config):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", help="path of the config file", default='config/config.json')
+    parser.add_argument("--config", help="path of the config file", default='../config/config.json')
 
     args = parser.parse_args()
     assert os.path.isfile(args.config)
