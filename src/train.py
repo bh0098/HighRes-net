@@ -172,7 +172,7 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
             alphas = alphas.float().to(device)
             hr_maps = hr_maps.float().to(device)
             hrs = hrs.float().to(device)
-            GPUtil.showUtilization()
+            # GPUtil.showUtilization()
             # torch.autograd.set_detect_anomaly(mode=True)
             srs = fusion_model(lrs, alphas)  # fuse multi frames (B, 1, 3*W, 3*H)
 
@@ -193,8 +193,8 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
             optimizer.step()
             epoch_loss = loss.detach().cpu().numpy() * len(hrs) / len(dataloaders['train'].dataset)
             train_loss += epoch_loss
-            print("epoch {} loss :".format(epoch),epoch_loss)
-            print("train  loss :",train_loss)
+            # print("epoch {} loss :".format(epoch),epoch_loss)
+            # print("train  loss :",train_loss)
         # Eval
         fusion_model.eval()
         val_score = 0.0  # monitor val score
@@ -218,15 +218,13 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
                     val_score += ESA / shift_cPSNR(np.clip(srs[i], 0, 1), hrs[i], hr_maps[i])
 
         val_score /= len(dataloaders['val'].dataset)
-
         if best_score > val_score:
             torch.save(fusion_model.state_dict(),
                        os.path.join(checkpoint_dir_run, 'HRNet.pth'))
             torch.save(regis_model.state_dict(),
                        os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
             best_score = val_score
-
-        print("validation score : ",val_score)
+        print("epoch {} val score is : {}".format(epoch,val_score))
         writer.add_image('SR Image', (srs[0] - np.min(srs[0])) / np.max(srs[0]), epoch, dataformats='HW')
         error_map = hrs[0] - srs[0]
         writer.add_image('Error Map', error_map, epoch, dataformats='HW')
