@@ -157,7 +157,7 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = torch.device('cpu')
     print("device : ", device)
-    best_score = 100
+    best_score = 300 #change best score from 100 to 300
 
     P = config["training"]["patch_size"]
     offset = (3 * config["training"]["patch_size"] - 128) // 2
@@ -231,7 +231,9 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
                 else:
                     ESA = baseline_cpsnrs[names[i]]
                     val_score += ESA / shift_cPSNR(np.clip(srs[i], 0, 1), hrs[i], hr_maps[i])
-        print("epoch {} val score is : {}".format(start_epoch + epoch, val_score))
+        print("epoch {} val score is : {}".format(epoch, val_score))
+        print("epoch {} loss is : {}".format(epoch, epoch_loss))
+        print("train {} loss is : {}".format(epoch, train_loss))
         val_score /= len(dataloaders['val'].dataset)
         if best_score > val_score:
             save_model(config,fusion_model,regis_model,epoch,optimizer,checkpoint_dir_run)
