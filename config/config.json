@@ -34,8 +34,8 @@
   },
     
   "training": {
-     "num_epochs": 1,
-     "batch_size": 32,
+     "num_epochs": 0,
+     "batch_size": 8,
 
      "min_L": 32,
      "n_views": 32,
