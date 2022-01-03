@@ -24,8 +24,13 @@ six
 Pillow
 
 ipdb
-
+gputil
 plotly
 jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
 line_profiler
+
+
+
+
+
