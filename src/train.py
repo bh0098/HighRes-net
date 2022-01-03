@@ -108,18 +108,18 @@ def get_crop_mask(patch_size, crop_size):
 
 def save_model(config,fusion_model,regis_model,epoch,optimizer,checkpoint_dir_run):
 
-    if config['checkpoint']['is_checkpoint'] :
+    # if config['checkpoint']['is_checkpoint'] :
 
-        torch.save({
-            'epoch': epoch,
-            'fusion_moedl': fusion_model.state_dict(),
-            'regis_model' : regis_model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }, os.path.join(checkpoint_dir_run, 'model.pth'))
-        torch.save(fusion_model.state_dict(),
-                   os.path.join(checkpoint_dir_run, 'HRNet.pth'))
-        torch.save(regis_model.state_dict(),
-                   os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
+    torch.save({
+        'epoch': epoch,
+        'fusion_moedl': fusion_model.state_dict(),
+        'regis_model' : regis_model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+    }, os.path.join(checkpoint_dir_run, 'model.pth'))
+    torch.save(fusion_model.state_dict(),
+               os.path.join(checkpoint_dir_run, 'HRNet.pth'))
+    torch.save(regis_model.state_dict(),
+               os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
 
 
 def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, baseline_cpsnrs, config,start_epoch =0 ):
