@@ -106,8 +106,23 @@ def get_crop_mask(patch_size, crop_size):
     torch_mask = torch.from_numpy(mask).type(torch.FloatTensor)
     return torch_mask
 
+def save_model(config,fusion_model,regis_model,epoch,optimizer,checkpoint_dir_run):
 
-def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, baseline_cpsnrs, config):
+    if config['checkpoint']['is_checkpoint'] :
+
+        torch.save({
+            'epoch': epoch,
+            'fusion_moedl': fusion_model.state_dict(),
+            'regis_model' : regis_model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+        }, os.path.join(checkpoint_dir_run, 'model.pth'))
+        torch.save(fusion_model.state_dict(),
+                   os.path.join(checkpoint_dir_run, 'HRNet.pth'))
+        torch.save(regis_model.state_dict(),
+                   os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
+
+
+def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, baseline_cpsnrs, config,start_epoch =0 ):
     """
     Trains HRNet and ShiftNet for Multi-Frame Super Resolution (MFSR), and saves best model.
     Args:
@@ -156,14 +171,14 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=config['training']['lr_decay'],
                                                verbose=True, patience=config['training']['lr_step'])
 
-    for epoch in tqdm(range(1, num_epochs + 1)):
-
+    for epoch in tqdm(range(start_epoch,start_epoch +  num_epochs + 1)):
+        print("train epoch : ",epoch)
         # Train
         fusion_model.train()
         regis_model.train()
         train_loss = 0.0  # monitor train loss
 
-        GPUtil.showUtilization()
+        # GPUtil.showUtilization()
         # Iterate over data.
         for lrs, alphas, hrs, hr_maps, names in tqdm(dataloaders['train']):
 
@@ -216,23 +231,40 @@ def trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, base
                 else:
                     ESA = baseline_cpsnrs[names[i]]
                     val_score += ESA / shift_cPSNR(np.clip(srs[i], 0, 1), hrs[i], hr_maps[i])
-
+        print("epoch {} val score is : {}".format(start_epoch + epoch, val_score))
         val_score /= len(dataloaders['val'].dataset)
         if best_score > val_score:
-            torch.save(fusion_model.state_dict(),
-                       os.path.join(checkpoint_dir_run, 'HRNet.pth'))
-            torch.save(regis_model.state_dict(),
-                       os.path.join(checkpoint_dir_run, 'ShiftNet.pth'))
+            save_model(config,fusion_model,regis_model,epoch,optimizer,checkpoint_dir_run)
             best_score = val_score
-        print("epoch {} val score is : {}".format(epoch,val_score))
+
+
         writer.add_image('SR Image', (srs[0] - np.min(srs[0])) / np.max(srs[0]), epoch, dataformats='HW')
         error_map = hrs[0] - srs[0]
-        writer.add_image('Error Map', error_map, epoch, dataformats='HW')
+        writer.add_image('Error Map', error_map,  epoch, dataformats='HW')
         writer.add_scalar("train/loss", train_loss, epoch)
-        writer.add_scalar("train/val_loss", val_score, epoch)
+        writer.add_scalar("train/val_loss", val_score,epoch)
         scheduler.step(val_score)
     writer.close()
 
+    #checking for checkpoint and load from checkpoint
+    #if ther is no checkpoint it will initate the model
+def check_or_initiate_model(config):
+    is_check = config['checkpoint']['is_checkpoint']
+    fusion_model = HRNet(config["network"])
+    regis_model = ShiftNet()
+    start_epoch = 0
+    opt = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()), lr=config["training"]["lr"])  # optim
+
+    if is_check :
+        check_add = config['checkpoint']['check_add']
+        checkpoint = torch.load(os.path.join(check_add,'model.pth'))
+        regis_model.load_state_dict(checkpoint['regis_model'])
+        fusion_model.load_state_dict(checkpoint['fusion_model'])
+        opt.load_state_dict(checkpoint['optimzer'])
+        start_epoch = checkpoint['epoch']
+
+
+    return fusion_model,regis_model,opt,start_epoch
 
 def main(config):
     """
@@ -248,10 +280,13 @@ def main(config):
     torch.backends.cudnn.benchmark = False
 
     # Initialize the network based on the network configuration
-    fusion_model = HRNet(config["network"])
-    regis_model = ShiftNet()
 
-    optimizer = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()), lr=config["training"]["lr"])  # optim
+    fusion_model ,regis_model,optimizer,start_epoch  = check_or_initiate_model(config)
+
+    # else :
+    #     fusion_model = HRNet(config["network"])
+    #     regis_model = ShiftNet()
+
     # ESA dataset
     data_directory = config["paths"]["prefix"]
 
@@ -295,7 +330,7 @@ def main(config):
     # Train model
     torch.cuda.empty_cache()
 
-    trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, baseline_cpsnrs, config)
+    trainAndGetBestModel(fusion_model, regis_model, optimizer, dataloaders, baseline_cpsnrs, config,start_epoch)
 
 
 if __name__ == '__main__':
