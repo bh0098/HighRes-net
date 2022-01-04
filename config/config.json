@@ -34,7 +34,7 @@
   },
     
   "training": {
-     "num_epochs": 0,
+     "num_epochs": 20,
      "batch_size": 8,
 
      "min_L": 32,
@@ -56,8 +56,8 @@
     "lambda": 0.000001
   },
   "checkpoint" : {
-    "is_checkpoint" : false,
-    "check_add" : "models/weights/batch_8_views_32_min_32_beta_50.0_time_2021-12-10-20-32-43-747510/"
+    "is_checkpoint" : true,
+    "check_add" : "models/weights/batch_8_views_32_min_32_beta_50.0_time_2022-01-03-12-51-22-828849/"
   }
 
 }

@@ -255,16 +255,21 @@ def check_or_initiate_model(config):
     fusion_model = HRNet(config["network"])
     regis_model = ShiftNet()
     start_epoch = 0
-    opt = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()), lr=config["training"]["lr"])  # optim
-
-    if is_check :
+    device = 'cuda'
+    if is_check:
         check_add = config['checkpoint']['check_add']
-        checkpoint = torch.load(os.path.join(check_add,'model.pth'))
+        checkpoint = torch.load(os.path.join(check_add, 'model.pth'), map_location=device)
         regis_model.load_state_dict(checkpoint['regis_model'])
-        fusion_model.load_state_dict(checkpoint['fusion_model'])
-        opt.load_state_dict(checkpoint['optimzer'])
+        fusion_model.load_state_dict(checkpoint['fusion_moedl'])
+        regis_model.to(device)
+        fusion_model.to(device)
+        opt = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()),
+                         lr=config["training"]["lr"])  # optim
+        opt.load_state_dict(checkpoint['optimizer'])
         start_epoch = checkpoint['epoch']
-
+    else:
+        opt = optim.Adam(list(fusion_model.parameters()) + list(regis_model.parameters()),
+                         lr=config["training"]["lr"])  # optim
 
     return fusion_model,regis_model,opt,start_epoch
 

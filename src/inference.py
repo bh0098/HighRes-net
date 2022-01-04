@@ -58,7 +58,6 @@ model = Model(config)
 model.load_checkpoint(checkpoint_file=checkpoint_file)
 is_one_img = False
 if(is_one_img):
-    # dir = getImageSetDirectories("../data/test/NIR/imgset1400")
     imset = ImagesetDataset(imset_dir="../data/test/NIR/imgset1400", config=config["training"], top_k=-1)
 else :
     train_dataset, val_dataset, test_dataset, baseline_cpsnrs = load_data(config_file_path, val_proportion=0.10, top_k=-1)
