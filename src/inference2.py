@@ -61,20 +61,31 @@ def main(config,args):
     alpahs = torch.tensor(np.ones(batch_lr_img[0].size()))
     print(batch_lr_img.shape)
     out = model(tfms(lr_img).unsqueeze(0), alpahs.unsqueeze(0))
-    sr_img = out[0][0]
+    sr_img = out[0][0].detach().numpy()
     # plt.imshow(sr_img.detach().numpy())
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 3, 1)
-    imgplot = plt.imshow(lr_img)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1, 3, 1)
+    # imgplot = plt.imshow(lr_img)
+    # ax.set_title('low res')
+    # ax = fig.add_subplot(1, 3, 2)
+    # imgplot = plt.imshow(hr_img)
+    # ax.set_title('high res')
+    # ax = fig.add_subplot(1, 3, 3)
+    # imgplot = plt.imshow(sr_img)
+    # ax.set_title('super res')
+    # plt.show()
+
+    fig = plt.figure(figsize=(6,3),dpi=100)
+    ax = fig.add_subplot(1,2,1)
+    imgplot = plt.imshow(lr_img[:lr_img.shape[0]//3,:lr_img.shape[0]//3])
     ax.set_title('low res')
-    ax = fig.add_subplot(1, 3, 2)
-    imgplot = plt.imshow(hr_img)
-    ax.set_title('high res')
-    ax = fig.add_subplot(1, 3, 3)
-    imgplot = plt.imshow(sr_img.detach().numpy())
+    ax = fig.add_subplot(1, 2, 2)
+    imgplot = plt.imshow(sr_img[:sr_img.shape[0]//3,:sr_img.shape[0]//3])
     ax.set_title('super res')
     plt.show()
+
+
 
 
 if __name__ == '__main__':
