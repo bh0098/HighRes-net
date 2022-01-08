@@ -61,10 +61,11 @@ def main(config,args):
     alpahs = torch.tensor(np.ones(batch_lr_img[0].size()))
     print(batch_lr_img.shape)
     out = model(tfms(lr_img).unsqueeze(0), alpahs.unsqueeze(0))
+
     sr_img = out[0][0].detach().numpy()
     # plt.imshow(sr_img.detach().numpy())
 
-    fig = plt.figure(figsize=(6,3),dpi=100)
+    fig = plt.figure(figsize=(6,3),dpi=150)
     ax = fig.add_subplot(1, 2, 1)
     imgplot = plt.imshow(lr_img)
     ax.set_title('low res')
@@ -76,7 +77,7 @@ def main(config,args):
     ax.set_title('super res')
     plt.show()
 
-    fig = plt.figure(figsize=(6,3),dpi=100)
+    fig = plt.figure(figsize=(6,3),dpi=150)
 
     ax = fig.add_subplot(1,2,1)
     fig.suptitle('comparing same part in images')
@@ -93,8 +94,8 @@ def main(config,args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", help="path of the config file", default='config/config.json')
-    parser.add_argument("--lr_add", help="path of low resolution img", default="data/train/NIR/imgset0596/LR000.png")
-    parser.add_argument("--hr_add", help="path of high resolution img", default="data/train/NIR/imgset0596/HR.png")
+    parser.add_argument("--lr_add", help="path of low resolution img", default="data/train/NIR/imgset0750/LR000.png.png")
+    parser.add_argument("--hr_add", help="path of high resolution img", default="data/train/NIR/imgset0750/HR.png")
     parser.add_argument("--model", help="path of trained model",
                         default="models/weights/batch_8_views_32_min_32_beta_50.0_time_2021-12-10-20-32-43-747510/HRNet.pth")
 

@@ -48,7 +48,7 @@ with open(config_file_path, "r") as read_file:
 print(config)
 
 checkpoint_dir = config["paths"]["checkpoint_dir"]
-run_subfolder = 'batch_8_views_32_min_32_beta_50_time_2021-12-21-16-38-26-532734'
+run_subfolder = 'batch_8_views_32_min_32_beta_50.0_time_2021-12-10-20-32-43-747510'
 checkpoint_filename = 'HRNet.pth'
 checkpoint_file = os.path.join('..', checkpoint_dir, run_subfolder, checkpoint_filename)
 # print(checkpoint_file)
@@ -63,8 +63,8 @@ else :
     train_dataset, val_dataset, test_dataset, baseline_cpsnrs = load_data(config_file_path, val_proportion=0.10, top_k=-1)
 
     print("dataset size : ", len(train_dataset))
-    results = model.evaluate(train_dataset[:10], val_dataset[:10], test_dataset[:10], baseline_cpsnrs)
-    # print(results.describe())
+    results = model.evaluate(train_dataset[:5], val_dataset[:5], test_dataset, baseline_cpsnrs)
+    print(results.describe())
     img_name = val_dataset[1]['name']
     imset = val_dataset[img_name]
 
