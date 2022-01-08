@@ -63,8 +63,10 @@ else :
     train_dataset, val_dataset, test_dataset, baseline_cpsnrs = load_data(config_file_path, val_proportion=0.10, top_k=-1)
 
     print("dataset size : ", len(train_dataset))
-    results = model.evaluate(train_dataset[:5], val_dataset[:5], test_dataset, baseline_cpsnrs)
+    results = model.evaluate(train_dataset[:5], val_dataset[:5], test_dataset[:10], baseline_cpsnrs)
     print(results.describe())
+    print(results.loc[results['part']=='test'].describe())
+    print(results.loc[results['part']=='test'].describe().loc['mean'])
     img_name = val_dataset[1]['name']
     imset = val_dataset[img_name]
 
